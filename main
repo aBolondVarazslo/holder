@@ -47,7 +47,7 @@ function main {
         if ($cmd -and $cmd -ne "noop") {
             try {
                 # Capture output including errors
-                $output = Invoke-Expression $cmd 2>&1 | Out-String
+                $output = Invoke-Expression "($cmd) | Out-String" 2>&1
                 $outText = "SUCCESS: $output"
                 $outText | Out-File -Append -FilePath $log
 
